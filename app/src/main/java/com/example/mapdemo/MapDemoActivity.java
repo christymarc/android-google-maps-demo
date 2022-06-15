@@ -1,12 +1,18 @@
 package com.example.mapdemo;
 
 import android.Manifest;
+import android.app.AlertDialog;
 import android.app.Dialog;
+import android.content.DialogInterface;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Looper;
+import android.text.Layout;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -27,7 +33,11 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 
@@ -37,7 +47,7 @@ import permissions.dispatcher.RuntimePermissions;
 import static com.google.android.gms.location.LocationServices.getFusedLocationProviderClient;
 
 @RuntimePermissions
-public class MapDemoActivity extends AppCompatActivity {
+public class MapDemoActivity extends AppCompatActivity implements GoogleMap.OnMapLongClickListener {
 
     private SupportMapFragment mapFragment;
     private GoogleMap map;
@@ -87,6 +97,7 @@ public class MapDemoActivity extends AppCompatActivity {
         map = googleMap;
         if (map != null) {
             // Map is ready
+            map.setOnMapLongClickListener(this);
             Toast.makeText(this, "Map Fragment was loaded properly!", Toast.LENGTH_SHORT).show();
             MapDemoActivityPermissionsDispatcher.getMyLocationWithPermissionCheck(this);
             MapDemoActivityPermissionsDispatcher.startLocationUpdatesWithPermissionCheck(this);
@@ -227,6 +238,47 @@ public class MapDemoActivity extends AppCompatActivity {
     public void onSaveInstanceState(Bundle savedInstanceState) {
         savedInstanceState.putParcelable(KEY_LOCATION, mCurrentLocation);
         super.onSaveInstanceState(savedInstanceState);
+    }
+
+    @Override
+    public void onMapLongClick(LatLng latLng) {
+        Toast.makeText(this, "Press detected", Toast.LENGTH_SHORT).show();
+        showAlertDialogForPoint(latLng);
+    }
+
+    private void showAlertDialogForPoint(final LatLng latLng) {
+        View messageView = LayoutInflater.from(MapDemoActivity.this)
+                .inflate(R.layout.message_item, null);
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+        alertDialogBuilder.setView(messageView);
+
+        final AlertDialog alertDialog = alertDialogBuilder.create();
+
+        alertDialog.setButton(DialogInterface.BUTTON_POSITIVE, "OK",
+                new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                BitmapDescriptor defaultMarker = BitmapDescriptorFactory
+                        .defaultMarker(BitmapDescriptorFactory.HUE_CYAN);
+                String title = ((EditText) alertDialog.findViewById(R.id.etTitle)).getText().toString();
+                String snippet = ((EditText) alertDialog.findViewById(R.id.etSnippet)).getText().toString();
+
+                Marker marker = map.addMarker(new MarkerOptions()
+                        .position(latLng)
+                        .title(title)
+                        .snippet(snippet)
+                        .icon(defaultMarker));
+            }
+        });
+        alertDialog.setButton(DialogInterface.BUTTON_NEGATIVE, "Cancel",
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        alertDialog.cancel();
+                    }
+                });
+
+        alertDialog.show();
     }
 
     // Define a DialogFragment that displays the error dialog
