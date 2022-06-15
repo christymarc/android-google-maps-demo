@@ -27,3 +27,5 @@ local.properties
 .idea
 build
 import-summary.txt
+
+app/values/string.xml
