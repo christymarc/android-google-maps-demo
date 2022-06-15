@@ -28,4 +28,4 @@ local.properties
 build
 import-summary.txt
 
-app/values/string.xml
+app/src/main/res/values/string.xml
